@@ -15,13 +15,13 @@ pipeline {
                 script {
                     // Xây dựng Docker image.
                     // Tên image là "my-node-app" và tag là số build hiện tại của Jenkins.
-                    // Thêm tag 'latest' để dễ dàng tham chiếu đến phiên bản mới nhất.
                     // Đảm bảo file Dockerfile nằm ở thư mục gốc của repository
                     docker.build("my-node-app:${env.BUILD_NUMBER}", '.')
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') { // Tùy chọn: Đăng nhập Docker Hub nếu bạn muốn push
-                        docker.image("my-node-app:${env.BUILD_NUMBER}").push() // Push image với tag BUILD_NUMBER
-                        docker.image("my-node-app:latest").push() // Push image với tag latest
-                    }
+                    // Loại bỏ hoàn toàn phần docker.withRegistry và push
+                    // docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                    //     docker.image("my-node-app:${env.BUILD_NUMBER}").push()
+                    //     docker.image("my-node-app:latest").push()
+                    // }
                 }
             }
         }
