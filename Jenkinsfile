@@ -41,16 +41,8 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Lấy Docker image vừa xây dựng hoặc image 'latest'
-                    // Chạy một container từ image đó:
-                    // -p 3000:3000: Map port 3000 từ host sang port 3000 của container.
-                    // -d: Chạy container ở chế độ detached (nền).
-                    // --name my-running-app: Đặt tên cho container để dễ quản lý.
-                    // Sử dụng image 'my-node-app:latest' để dễ quản lý trong môi trường production,
-                    // hoặc 'my-node-app:${env.BUILD_NUMBER}' để chắc chắn dùng image vừa build.
-                    docker.image("my-node-app:latest").run("-p 3000:3000 -d --name my-running-app")
-                    
-                    // Chờ 10 giây để ứng dụng trong container khởi động hoàn toàn.
+                    docker.image("my-node-app:${env.BUILD_NUMBER}") // Sửa từ :latest thành :${env.BUILD_NUMBER}
+                            .run("-p 3000:3000 -d --name my-running-app")
                     sh 'sleep 10'
                 }
             }
