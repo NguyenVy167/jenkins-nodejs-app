@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git url: 'https://github.com/NguyenVy167/jenkins-nodejs-app.git', credentialsId: 'github-pat-for-nodejs-app' // <--- THAY ĐỔI Ở ĐÂY
+                git url: 'git@github.com:NguyenVy167/jenkins-nodejs-app.git', credentialsId: 'github-ssh-key-for-nodejs-app' // <--- THAY ĐỔI Ở ĐÂY
             }
         }
 
