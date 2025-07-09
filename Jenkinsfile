@@ -2,19 +2,14 @@ pipeline {
     agent any
 
     stages {
-        stage('Prepare SSH (nếu cần)') {
+        stage('Checkout') {
             steps {
-                // Thêm host key GitHub vào known_hosts nếu chưa có
-                sh 'ssh-keyscan github.com >> ~/.ssh/known_hosts || true'
+                // Không cần credentialsId nữa nếu repo là public và chỉ đọc
+                git url: 'https://github.com/NguyenVy167/jenkins-nodejs-app.git'
             }
         }
 
-        stage('Checkout') {
-            steps {
-                git url: 'git@github.com:NguyenVy167/jenkins-nodejs-app.git',
-                    credentialsId: 'github-ssh-key-for-nodejs-app'
-            }
-        }
+        // ... các stage khác giữ nguyên ...
 
         stage('Build Docker Image') {
             steps {
@@ -28,7 +23,7 @@ pipeline {
             steps {
                 script {
                     docker.image("my-node-app:${env.BUILD_NUMBER}")
-                          .run("-p 3000:3000 -d --name my-running-app")
+                            .run("-p 3000:3000 -d --name my-running-app")
                     sh 'sleep 10'
                 }
             }
