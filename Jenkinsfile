@@ -15,8 +15,25 @@ pipeline {
                 script {
                     // Xây dựng Docker image.
                     // Tên image là "my-node-app" và tag là số build hiện tại của Jenkins.
+                    // Thêm tag 'latest' để dễ dàng tham chiếu đến phiên bản mới nhất.
                     // Đảm bảo file Dockerfile nằm ở thư mục gốc của repository
-                    docker.build("my-node-app:${env.BUILD_NUMBER}", '.') // Dấu chấm '.' chỉ định Dockerfile nằm trong thư mục hiện tại (thư mục gốc của repo)
+                    docker.build("my-node-app:${env.BUILD_NUMBER}", '.')
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') { // Tùy chọn: Đăng nhập Docker Hub nếu bạn muốn push
+                        docker.image("my-node-app:${env.BUILD_NUMBER}").push() // Push image với tag BUILD_NUMBER
+                        docker.image("my-node-app:latest").push() // Push image với tag latest
+                    }
+                }
+            }
+        }
+
+        stage('Stop & Remove Old Container') {
+            steps {
+                script {
+                    // Dừng và xóa container cũ nếu nó đang chạy.
+                    // Việc này đảm bảo không có xung đột port hoặc tên container.
+                    // '|| true' giúp bước này không làm pipeline thất bại nếu container không tồn tại.
+                    sh 'docker stop my-running-app || true'
+                    sh 'docker rm my-running-app || true'
                 }
             }
         }
@@ -24,13 +41,14 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    // Lấy Docker image vừa xây dựng.
+                    // Lấy Docker image vừa xây dựng hoặc image 'latest'
                     // Chạy một container từ image đó:
                     // -p 3000:3000: Map port 3000 từ host sang port 3000 của container.
                     // -d: Chạy container ở chế độ detached (nền).
                     // --name my-running-app: Đặt tên cho container để dễ quản lý.
-                    docker.image("my-node-app:${env.BUILD_NUMBER}")
-                            .run("-p 3000:3000 -d --name my-running-app")
+                    // Sử dụng image 'my-node-app:latest' để dễ quản lý trong môi trường production,
+                    // hoặc 'my-node-app:${env.BUILD_NUMBER}' để chắc chắn dùng image vừa build.
+                    docker.image("my-node-app:latest").run("-p 3000:3000 -d --name my-running-app")
                     
                     // Chờ 10 giây để ứng dụng trong container khởi động hoàn toàn.
                     sh 'sleep 10'
@@ -47,15 +65,14 @@ pipeline {
             }
         }
 
-        stage('Clean up') {
+        stage('Clean up Old Images (Optional)') {
             steps {
-                // Dừng container có tên "my-running-app".
-                // "|| true" để đảm bảo bước này không làm pipeline thất bại nếu container không tồn tại.
-                sh 'docker stop my-running-app || true' 
-                // Xóa container "my-running-app".
-                sh 'docker rm my-running-app || true'
-                // Xóa Docker image đã build.
-                sh 'docker rmi my-node-app:${env.BUILD_NUMBER} || true'
+                script {
+                    // Xóa các Docker image cũ để giải phóng dung lượng.
+                    // Cẩn thận khi sử dụng lệnh này trong môi trường production nếu bạn cần các phiên bản cũ.
+                    // Lệnh này tìm tất cả các image có tên 'my-node-app' trừ image hiện tại vừa build và image 'latest'.
+                    sh "docker rmi \$(docker images -q my-node-app | grep -v ${env.BUILD_NUMBER} | grep -v latest | uniq) || true"
+                }
             }
         }
     }
@@ -70,6 +87,13 @@ pipeline {
         }
         failure {
             echo 'Pipeline failed!' // In ra nếu pipeline thất bại
+        }
+        // Thêm một bước clean up cuối cùng để đảm bảo container được dừng và xóa ngay cả khi các stage trước đó thất bại
+        unstable { // Chạy khi pipeline hoàn thành với trạng thái UNSTABLE (ví dụ: test fail nhưng build thành công)
+            echo 'Pipeline completed with unstable status.'
+        }
+        aborted { // Chạy khi pipeline bị hủy
+            echo 'Pipeline was aborted.'
         }
     }
 }
