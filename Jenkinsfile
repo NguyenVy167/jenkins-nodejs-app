@@ -1,15 +1,10 @@
 pipeline {
     agent any
 
-    tools {
-        // Cần cài đặt plugin NodeJS Plugin trong Jenkins nếu muốn sử dụng Nodejs Tool
-        // nodejs 'nodejs18' // Thay 'nodejs18' bằng tên cấu hình Nodejs bạn đã cài trong Jenkins
-    }
-
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/hoannguyen-dev/jenkins-nodejs-app.git' // Thay bằng URL repo của bạn
+                git 'https://github.com/NguyenVy167/jenkins-nodejs-app.git'
             }
         }
 
@@ -24,38 +19,30 @@ pipeline {
         stage('Run Docker Container') {
             steps {
                 script {
-                    docker.image("my-node-app:${env.BUILD_NUMBER}").run("-p 3000:3000 -d --name my-running-app")
-                    // Đợi một chút để container khởi động hoàn tất
+                    docker.image("my-node-app:${env.BUILD_NUMBER}")
+                          .run("-p 3000:3000 -d --name my-running-app")
                     sh 'sleep 10'
                 }
             }
         }
 
-        stage('Test Application (Optional)') {
+        stage('Test Application') {
             steps {
-                script {
-                    // Kiểm tra ứng dụng bằng cách gửi yêu cầu HTTP
-                    // Lưu ý: nếu chạy trên máy chủ khác, cần thay localhost bằng IP của máy chủ Jenkins
-                    sh 'curl -s http://localhost:3000'
-                    sh 'curl -s http://localhost:3000 | grep "Hello from Jenkins CI/CD with Docker!"'
-                }
+                sh 'curl -s http://localhost:3000 | grep "Hello from Jenkins CI/CD with Docker!"'
             }
         }
 
-        stage('Clean up (Optional)') {
+        stage('Clean up') {
             steps {
-                script {
-                    sh 'docker stop my-running-app || true' // Dừng container
-                    sh 'docker rm my-running-app || true'   // Xóa container
-                    sh 'docker rmi my-node-app:${env.BUILD_NUMBER} || true' // Xóa image đã build
-                }
+                sh 'docker stop my-running-app || true'
+                sh 'docker rm my-running-app || true'
+                sh 'docker rmi my-node-app:${env.BUILD_NUMBER} || true'
             }
         }
     }
 
     post {
         always {
-            // Luôn chạy sau khi Pipeline kết thúc, dù thành công hay thất bại
             echo 'Pipeline finished.'
         }
         success {
