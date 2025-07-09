@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git 'https://github.com/NguyenVy167/jenkins-nodejs-app.git'
+                git url: 'https://github.com/NguyenVy167/jenkins-nodejs-app.git', credentialsId: 'github-pat-for-nodejs-app' // <--- THAY ĐỔI Ở ĐÂY
             }
         }
 
@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
                     docker.image("my-node-app:${env.BUILD_NUMBER}")
-                          .run("-p 3000:3000 -d --name my-running-app")
+                            .run("-p 3000:3000 -d --name my-running-app")
                     sh 'sleep 10'
                 }
             }
