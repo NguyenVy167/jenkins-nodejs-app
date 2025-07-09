@@ -2,8 +2,8 @@ pipeline {
     agent any
 
     tools {
-        # Cần cài đặt plugin NodeJS Plugin trong Jenkins nếu muốn sử dụng Nodejs Tool
-        # nodejs 'nodejs18' // Thay 'nodejs18' bằng tên cấu hình Nodejs bạn đã cài trong Jenkins
+        // Cần cài đặt plugin NodeJS Plugin trong Jenkins nếu muốn sử dụng Nodejs Tool
+        // nodejs 'nodejs18' // Thay 'nodejs18' bằng tên cấu hình Nodejs bạn đã cài trong Jenkins
     }
 
     stages {
